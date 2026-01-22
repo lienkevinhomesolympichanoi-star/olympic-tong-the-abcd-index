@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bản Đồ Quy Hoạch - Thảo Nguyễn Vinhomes</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { width: 100%; height: 100vh; background: #000; } 
+        body { margin: 0; padding: 0; }
+        .control-panel { background: white; padding: 10px; border: 2px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .icon-btn { background: white; width: 44px; height: 44px; line-height: 44px; margin-bottom: 10px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.2); cursor: pointer; text-align: center; font-size: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: block; }
+        .btn-full { color: #2e7d32; } 
+        .btn-back { color: #d32f2f; font-weight: bold; font-size: 26px; } 
+        .btn-contact { color: #0084ff; } 
+        .map-logo { position: absolute; bottom: 55px; left: 15px; z-index: 1000; }
+        .map-logo img { height: auto; cursor: pointer; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
+        @media (min-width: 768px) { .map-logo img { width: 176px; } }
+        @media (max-width: 767px) { .map-logo img { width: 132px; } }
+        .seo-footer { position: absolute; bottom: 8px; left: 10px; z-index: 1001; background: rgba(255, 255, 255, 0.8); padding: 4px 10px; border-radius: 4px; font-size: 11px; color: #333; }
+        .seo-footer a { color: #0068ff; text-decoration: none; font-weight: bold; }
+        .gps-dot { width: 14px; height: 14px; background-color: #007bff; border: 2px solid white; border-radius: 50%; position: relative; }
+        .gps-dot::after { content: ''; width: 100%; height: 100%; border-radius: 50%; background-color: #007bff; position: absolute; top: 0; left: 0; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="map-logo">
+        <a href="javascript:void(0)" onclick="contactZalo()"><img src="logo.png" alt="Thảo Nguyễn Vinhomes"></a>
+    </div>
+    <div class="seo-footer">Bản đồ tạo bởi <b>Thảo Nguyễn Vinhomes Team</b> Website: <a href="https://www.lienkevinhomes.olympichanoi.com" target="_blank"> www.lienkevinhomes.olympichanoi.com</a></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var SĐT_ZALO = "0971734339"; 
+        var LINK_TRANG_CHU = "https://lienkevinhomes.olympichanoi.com/quy-hoach-vinhomes-olympic-ha-noi/"; 
+        
+        // TỌA ĐỘ TÂM: Mình đã chỉnh lại khớp với khu vực Ocean Park 2-3 (Olympic)
+        var TOA_DO_DU_AN = [20.9385, 105.9755]; 
+
+        var map = L.map('map', { zoomControl: false }).setView(TOA_DO_DU_AN, 14);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        
+        // Vệ tinh Google
+        L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
+        
+        // KẾT NỐI KHO 1: Đây là đoạn quan trọng nhất đã được sửa link Raw GitHub
+        var quyHoach = L.tileLayer('https://raw.githubusercontent.com/lienkevinhomesolympichanoi-star/database-map/main/olympic%20tong%20the%20abcd%20pic%20qgis/tiles/{z}/{x}/{y}.png', { 
+            maxZoom: 18, 
+            minZoom: 11,
+            opacity: 0.7 
+        }).addTo(map);
+
+        // Thanh trượt độ mờ
+        var opacityControl = L.control({position: 'topright'});
+        opacityControl.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'control-panel');
+            div.innerHTML = '<b>Độ mờ quy hoạch</b><br><input type="range" id="range-slider" min="0" max="1" step="0.1" value="0.7" style="width:100px">';
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.on(div, 'input', function(e) {
+                quyHoach.setOpacity(e.target.value);
+            });
+            return div;
+        };
+        opacityControl.addTo(map);
+
+        // Nút bấm tiện ích
+        var leftControl = L.control({position: 'topleft'});
+        leftControl.onAdd = function (map) {
+            var div = L.DomUtil.create('div');
+            div.innerHTML =  
+                '<div class="icon-btn btn-full" title="Toàn màn hình" onclick="window.open(window.location.href, \'_blank\')">⛶</div>' +
+                '<div class="icon-btn btn-back" title="Về trang chủ" onclick="goHome()">➦</div>' + 
+                '<div class="icon-btn btn-contact" title="Chat Zalo" onclick="contactZalo()">💬</div>';
+            L.DomEvent.disableClickPropagation(div);
+            return div;
+        };
+        leftControl.addTo(map);
+
+        // GPS định vị người dùng
+        var markerGPS;
+        map.locate({setView: false, watch: true, enableHighAccuracy: true});
+        map.on('locationfound', function(e) {
+            if (markerGPS) map.removeLayer(markerGPS);
+            markerGPS = L.marker(e.latlng, {icon: L.divIcon({ className: 'gps-dot', iconSize: [14, 14], iconAnchor: [7, 7] })}).addTo(map);
+        });
+
+        function goHome() { window.location.href = LINK_TRANG_CHU; }
+        function contactZalo() { window.open("https://zalo.me/" + SĐT_ZALO, '_blank'); }
+    </script>
+</body>
+</html>
