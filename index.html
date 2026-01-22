@@ -9,10 +9,8 @@
         #map { width: 100%; height: 100vh; background: #000; }
         body { margin: 0; padding: 0; font-family: sans-serif; }
         
-        /* Bảng điều khiển thanh trượt */
         .control-panel { background: white; padding: 10px; border: 2px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        /* Nút công cụ bên trái */
         .icon-btn { 
             background: white; width: 44px; height: 44px; line-height: 44px; 
             margin-bottom: 10px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.2); 
@@ -23,16 +21,32 @@
         .btn-back { color: #d32f2f; font-weight: bold; font-size: 26px; } 
         .btn-contact { color: #0084ff; } 
 
-        /* Logo và Footer */
         .map-logo { position: absolute; bottom: 65px; left: 15px; z-index: 1000; }
         .map-logo img { width: 132px; height: auto; cursor: pointer; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
         
         .seo-footer { 
             position: absolute; bottom: 10px; left: 10px; z-index: 1001; 
             background: rgba(255, 255, 255, 0.85); padding: 6px 12px; 
-            border-radius: 4px; font-size: 12px; color: #333; border: 1px solid #ccc;
+            border-radius: 4px; font-size: 11px; color: #333; border: 1px solid #ccc;
         }
         .seo-footer a { color: #0068ff; text-decoration: none; font-weight: bold; }
+
+        /* Style cho chấm định vị GPS */
+        .gps-dot {
+            width: 15px; height: 15px; background-color: #007bff;
+            border: 2px solid white; border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,123,255,0.8);
+            position: relative;
+        }
+        .gps-dot::after {
+            content: ''; width: 100%; height: 100%; border-radius: 50%;
+            background-color: #007bff; position: absolute;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -52,40 +66,24 @@
 
     <div class="seo-footer">
         Bản đồ được tạo bởi <b>Thảo Nguyễn Vinhomes Teams</b>. 
-        Website: <a href="https://www.lienkevinhomes.olympichanoi.com" target="_blank">www.lienkevinhomes.olympichanoi.com</a> 
-        [<a href="https://www.lienkevinhomes.olympichanoi.com" target="_blank">liền kề vinhomes olympic hà nội</a>]
+        Website: <a href="https://lienkevinhomes.olympichanoi.com" target="_blank">www.lienkevinhomes.olympichanoi.com</a> 
+        [<a href="https://lienkevinhomes.olympichanoi.com" target="_blank">liền kề vinhomes olympic hà nội</a>]
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Khởi tạo bản đồ với tọa độ mới bạn cung cấp
-        var map = L.map('map', { zoomControl: false }).setView([20.883272, 105.849718], 15);
+        // MỨC ZOOM TỔNG THỂ: Chỉnh từ 15 xuống 13 để nhìn rộng hơn khi mở máy
+        var map = L.map('map', { zoomControl: false }).setView([20.883272, 105.849718], 13);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Lớp vệ tinh Google
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3']
         }).addTo(map);
 
-        // Lớp Quy hoạch (Đã xóa /tiles/ để khớp Kho 1)
         var quyHoachLayer = L.tileLayer('https://raw.githubusercontent.com/lienkevinhomesolympichanoi-star/database-map/main/olympic%20tong%20the%20abcd%20pic%20qgis/{z}/{x}/{y}.png', {
             maxZoom: 17, minZoom: 11, opacity: 0.7
         }).addTo(map);
 
-        // Thanh trượt độ mờ - Đã Fix lỗi kéo rê bản đồ
         var command = L.control({position: 'topright'});
         command.onAdd = function (map) {
-            var div = L.DomUtil.create('div', 'control-panel');
-            div.innerHTML = '<b>Độ mờ quy hoạch</b><br><input id="range" type="range" min="0" max="1" step="0.1" value="0.7" style="width:100px; cursor:pointer;">';
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-            return div;
-        };
-        command.addTo(map);
-
-        document.getElementById("range").addEventListener("input", function(e) {
-            quyHoachLayer.setOpacity(e.target.value);
-        });
-    </script>
-</body>
-</html>
+            var div = L.DomUtil.create('div',
