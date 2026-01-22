@@ -7,41 +7,78 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #map { width: 100%; height: 100vh; background: #000; }
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        
+        /* Bảng điều khiển thanh trượt */
         .control-panel { background: white; padding: 10px; border: 2px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .map-logo { position: absolute; bottom: 55px; left: 15px; z-index: 1000; }
-        .map-logo img { height: auto; width: 132px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
+
+        /* Nút công cụ bên trái */
+        .icon-btn { 
+            background: white; width: 44px; height: 44px; line-height: 44px; 
+            margin-bottom: 10px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.2); 
+            cursor: pointer; text-align: center; font-size: 22px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: block; text-decoration: none;
+        }
+        .btn-full { color: #2e7d32; } 
+        .btn-back { color: #d32f2f; font-weight: bold; font-size: 26px; } 
+        .btn-contact { color: #0084ff; } 
+
+        /* Logo và Footer */
+        .map-logo { position: absolute; bottom: 65px; left: 15px; z-index: 1000; }
+        .map-logo img { width: 132px; height: auto; cursor: pointer; filter: drop-shadow(0 0 8px rgba(255,255,255,0.6)); }
+        
+        .seo-footer { 
+            position: absolute; bottom: 10px; left: 10px; z-index: 1001; 
+            background: rgba(255, 255, 255, 0.85); padding: 6px 12px; 
+            border-radius: 4px; font-size: 12px; color: #333; border: 1px solid #ccc;
+        }
+        .seo-footer a { color: #0068ff; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="map"></div>
+
+    <div id="custom-controls" style="position: absolute; top: 10px; left: 10px; z-index: 1000;">
+        <div class="icon-btn btn-full" title="Mở rộng bản đồ" onclick="window.open(window.location.href, '_blank')">⛶</div>
+        <div class="icon-btn btn-back" title="Quay lại" onclick="history.back()">➦</div>
+        <a href="https://zalo.me/0971734339" target="_blank" class="icon-btn btn-contact" title="Liên hệ Zalo">💬</a>
+    </div>
+
     <div class="map-logo">
-        <img src="logo.png" alt="Logo">
+        <a href="https://zalo.me/0971734339" target="_blank">
+            <img src="logo.png" alt="Thảo Nguyễn Vinhomes">
+        </a>
+    </div>
+
+    <div class="seo-footer">
+        Bản đồ được tạo bởi <b>Thảo Nguyễn Vinhomes Teams</b>. 
+        Website: <a href="https://www.lienkevinhomes.olympichanoi.com" target="_blank">www.lienkevinhomes.olympichanoi.com</a> 
+        [<a href="https://www.lienkevinhomes.olympichanoi.com" target="_blank">liền kề vinhomes olympic hà nội</a>]
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. ĐÃ SỬA: Tọa độ trung tâm dự án theo yêu cầu của bạn
-        var map = L.map('map').setView([20.883272, 105.849718], 15);
+        // Khởi tạo bản đồ với tọa độ mới bạn cung cấp
+        var map = L.map('map', { zoomControl: false }).setView([20.883272, 105.849718], 15);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        var googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-            maxZoom: 20,
-            subdomains:['mt0','mt1','mt2','mt3']
+        // Lớp vệ tinh Google
+        L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3']
         }).addTo(map);
 
-        // 2. ĐÃ SỬA: Xóa bỏ "/tiles/" để khớp với cấu trúc thư mục thực tế của bạn
+        // Lớp Quy hoạch (Đã xóa /tiles/ để khớp Kho 1)
         var quyHoachLayer = L.tileLayer('https://raw.githubusercontent.com/lienkevinhomesolympichanoi-star/database-map/main/olympic%20tong%20the%20abcd%20pic%20qgis/{z}/{x}/{y}.png', {
-            maxZoom: 17,
-            minZoom: 11,
-            opacity: 0.7,
-            tms: false
+            maxZoom: 17, minZoom: 11, opacity: 0.7
         }).addTo(map);
 
-        // Thêm thanh điều chỉnh độ mờ
+        // Thanh trượt độ mờ - Đã Fix lỗi kéo rê bản đồ
         var command = L.control({position: 'topright'});
         command.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'control-panel');
-            div.innerHTML = '<b>Độ mờ quy hoạch</b><br><input id="range" type="range" min="0" max="1" step="0.1" value="0.7" style="width:100px">';
+            div.innerHTML = '<b>Độ mờ quy hoạch</b><br><input id="range" type="range" min="0" max="1" step="0.1" value="0.7" style="width:100px; cursor:pointer;">';
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
             return div;
         };
         command.addTo(map);
