@@ -36,23 +36,25 @@
         var SĐT_ZALO = "0971734339"; 
         var LINK_TRANG_CHU = "https://lienkevinhomes.olympichanoi.com/quy-hoach-vinhomes-olympic-ha-noi/"; 
         
-        // TỌA ĐỘ TÂM: Mình đã chỉnh lại khớp với khu vực Ocean Park 2-3 (Olympic)
+        // TỌA ĐỘ TÂM: Đã chỉnh về khu vực Vinhomes Olympic Ocean Park
         var TOA_DO_DU_AN = [20.9385, 105.9755]; 
 
+        // Khởi tạo Map với mức zoom ban đầu là 14 (để thấy ngay lớp quy hoạch)
         var map = L.map('map', { zoomControl: false }).setView(TOA_DO_DU_AN, 14);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         
         // Vệ tinh Google
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
         
-        // KẾT NỐI KHO 1: Đây là đoạn quan trọng nhất đã được sửa link Raw GitHub
+        // KẾT NỐI KHO 1: Sử dụng link Raw GitHub chính xác
+        // Đã thay đổi khoảng trắng trong tên thư mục thành %20 để trình duyệt hiểu được
         var quyHoach = L.tileLayer('https://raw.githubusercontent.com/lienkevinhomesolympichanoi-star/database-map/main/olympic%20tong%20the%20abcd%20pic%20qgis/tiles/{z}/{x}/{y}.png', { 
             maxZoom: 18, 
-            minZoom: 11,
+            minZoom: 11, // Tương ứng với dữ liệu bạn đã xuất từ zoom 11-17
             opacity: 0.7 
         }).addTo(map);
 
-        // Thanh trượt độ mờ
+        // Thanh trượt độ mờ quy hoạch
         var opacityControl = L.control({position: 'topright'});
         opacityControl.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'control-panel');
@@ -65,7 +67,7 @@
         };
         opacityControl.addTo(map);
 
-        // Nút bấm tiện ích
+        // Nút bấm bên trái
         var leftControl = L.control({position: 'topleft'});
         leftControl.onAdd = function (map) {
             var div = L.DomUtil.create('div');
@@ -78,7 +80,7 @@
         };
         leftControl.addTo(map);
 
-        // GPS định vị người dùng
+        // GPS định vị
         var markerGPS;
         map.locate({setView: false, watch: true, enableHighAccuracy: true});
         map.on('locationfound', function(e) {
