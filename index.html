@@ -53,7 +53,7 @@
         document.getElementById("range").addEventListener("input", function(e) { quyHoach.setOpacity(e.target.value); });
         var markerGPS, isGPSActive = false, gpsText = document.getElementById('gps-text');
         function toggleGPS() {
-            if (!isGPSActive) { map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true}); } 
+            if (!isGPSActive) { map.locate({setView: false, maxZoom: 16, enableHighAccuracy: true}); } 
             else { if (markerGPS) map.removeLayer(markerGPS); isGPSActive = false; gpsText.innerText = "OFF"; gpsText.className = "gps-status status-off"; }
         }
         map.on('locationfound', function(e) {
@@ -62,7 +62,7 @@
             isGPSActive = true; gpsText.innerText = "ON"; gpsText.className = "gps-status status-on";
         });
         map.on('locationerror', function() { alert("Vui lòng cho phép quyền vị trí trên trình duyệt!"); isGPSActive = false; gpsText.innerText = "OFF"; gpsText.className = "gps-status status-off"; });
-        map.locate({setView: false, enableHighAccuracy: true});
+       
     </script>
 </body>
 </html>
