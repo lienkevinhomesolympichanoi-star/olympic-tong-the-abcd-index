@@ -9,7 +9,7 @@
         #map { width: 100%; height: 100vh; background: #000; }
         body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
         .control-panel { background: white; padding: 10px; border: 2px solid #ccc; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .icon-btn { background: white; width: 42px; height: 42px; line-height: 42px; margin-bottom: 8px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.2); cursor: pointer; text-align: center; font-size: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-decoration: none; position: relative; }
+        .icon-btn { background: white; width: 42px; height: 42px; line-height: 42px; margin-bottom: 8px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.2); cursor: pointer; text-align: center; font-size: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-decoration: none; position: relative; -webkit-tap-highlight-color: transparent; }
         .btn-full { color: #2e7d32; } .btn-back { color: #d32f2f; font-weight: bold; } .btn-contact { color: #0084ff; }
         .btn-gps { flex-direction: column; line-height: normal; height: auto; padding: 5px 0; }
         .gps-status { font-size: 9px; font-weight: bold; margin-top: 2px; text-transform: uppercase; }
@@ -36,13 +36,18 @@
         </div>
     </div>
     <div class="map-logo"><a href="https://zalo.me/0971734339" target="_blank"><img src="logo.png"></a></div>
-    <div class="seo-footer">Bản đồ được tạo bởi <b>Thảo Nguyễn Vinhomes Teams</b>. Website: <a href="https://lienkevinhomes.olympichanoi.com" target="_blank">www.lienkevinhomes.olympichanoi.com</a> [<a href="https://lienkevinhomes.olympichanoi.com" target="_blank">Vinhomes Olympic Hà Nội</a>]</div>
+    <div class="seo-footer">Bản đồ quy hoạch bởi <b>Thảo Nguyễn Vinhomes</b>. Website: <a href="https://lienkevinhomes.olympichanoi.com" target="_blank">www.lienkevinhomes.olympichanoi.com</a> [<a href="https://lienkevinhomes.olympichanoi.com" target="_blank">liền kề Vinhomes Olympic Hà Nội</a>] </div>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map', { zoomControl: false }).setView([20.883272, 105.849718], 12);
+        var map = L.map('map', { zoomControl: false, tap: false }).setView([20.883272, 105.849718], 12);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 22, subdomains:['mt0','mt1','mt2','mt3'] }).addTo(map);
-        var quyHoach = L.tileLayer('https://raw.githubusercontent.com/lienkevinhomesolympichanoi-star/database-map/main/olympic%20tong%20the%20abcd%20pic%20qgis/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 11, opacity: 0.7 }).addTo(map);
+        
+        var quyHoach = L.tileLayer('https://raw.githubusercontent.com/lienkevinhomesolympichanoi-star/database-map/main/olympic%20tong%20the%20abcd%20pic%20qgis/{z}/{x}/{y}.png', { 
+            maxZoom: 18, minZoom: 11, opacity: 0.7 
+        }).addTo(map);
+
         var opacityCtrl = L.control({position: 'topright'});
         opacityCtrl.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'control-panel');
@@ -51,18 +56,35 @@
         };
         opacityCtrl.addTo(map);
         document.getElementById("range").addEventListener("input", function(e) { quyHoach.setOpacity(e.target.value); });
+
         var markerGPS, isGPSActive = false, gpsText = document.getElementById('gps-text');
+
         function toggleGPS() {
-            if (!isGPSActive) { map.locate({setView: false, maxZoom: 16, enableHighAccuracy: true}); } 
-            else { if (markerGPS) map.removeLayer(markerGPS); isGPSActive = false; gpsText.innerText = "OFF"; gpsText.className = "gps-status status-off"; }
+            if (!isGPSActive) { 
+                // Tối ưu cho iPhone: Chỉ kích hoạt khi click và KHÔNG tự động bay đi (setView: false)
+                map.locate({setView: false, maxZoom: 16, enableHighAccuracy: true, watch: false}); 
+            } 
+            else { 
+                if (markerGPS) map.removeLayer(markerGPS); 
+                isGPSActive = false; 
+                gpsText.innerText = "OFF"; 
+                gpsText.className = "gps-status status-off";
+                map.stopLocate();
+            }
         }
+
         map.on('locationfound', function(e) {
             if (markerGPS) map.removeLayer(markerGPS);
             markerGPS = L.marker(e.latlng, { icon: L.divIcon({ className: 'gps-dot', iconSize: [12, 12] }) }).addTo(map);
             isGPSActive = true; gpsText.innerText = "ON"; gpsText.className = "gps-status status-on";
         });
-        map.on('locationerror', function() { alert("Vui lòng cho phép quyền vị trí trên trình duyệt!"); isGPSActive = false; gpsText.innerText = "OFF"; gpsText.className = "gps-status status-off"; });
-       
+
+        map.on('locationerror', function() { 
+            alert("Vui lòng cho phép quyền vị trí trong Cài đặt Safari/Chrome của iPhone để sử dụng tính năng này!"); 
+            isGPSActive = false; gpsText.innerText = "OFF"; gpsText.className = "gps-status status-off"; 
+        });
+
+        // ĐÃ XÓA LỆNH TỰ ĐỘNG HỎI GPS Ở ĐÂY ĐỂ TRÁNH LỖI IPHONE
     </script>
 </body>
 </html>
